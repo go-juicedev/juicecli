@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # 触发标签格式为 v开头，如 v1.0.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          
+      - name: Build
+        run: |
+          # 编译 Linux 版本
+          GOOS=linux GOARCH=amd64 go build -o bin/juicecli-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -o bin/juicecli-linux-arm64
+          
+          # 编译 macOS 版本
+          GOOS=darwin GOARCH=amd64 go build -o bin/juicecli-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o bin/juicecli-darwin-arm64
+          
+          # 编译 Windows 版本
+          GOOS=windows GOARCH=amd64 go build -o bin/juicecli-windows-amd64.exe
+          GOOS=windows GOARCH=arm64 go build -o bin/juicecli-windows-arm64.exe
+          
+          # 创建压缩文件
+          cd bin
+          for file in *; do
+            tar czf "$file.tar.gz" "$file"
+          done
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/*.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
