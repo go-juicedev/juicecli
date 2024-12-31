@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # 触发标签格式为 v开头，如 v1.0.0
 
+permissions:
+  contents: write  # 添加写入权限
+
 jobs:
   release:
     runs-on: ubuntu-latest
