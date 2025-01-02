@@ -169,8 +169,6 @@ func (f *readFuncBodyMaker) build() {
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
 			query,
 		)
-		//fmt.Fprintf(builder, "\n\trows, err := manager.Object(iface.%s).QueryContext(%s, %s)",
-		//	f.function.Name(), f.function.Params().NameAt(ast.ParamPrefix, 0), query)
 		builder.FWrite("if err != nil {")
 		builder.FTabWrite(1, "return nil, err")
 		builder.FWrite("}")
@@ -178,15 +176,7 @@ func (f *readFuncBodyMaker) build() {
 		if !isPointer {
 			builder.FWrite("return juice.List[%s](rows)", retType)
 		} else {
-			builder.FWrite("ret, err := juice.List[%s](rows)", retType)
-			builder.FWrite("if err != nil {")
-			builder.FTabWrite(1, "return nil, err")
-			builder.FWrite("}")
-			builder.FWrite("var result = make([]*%s, len(ret))", retType)
-			builder.FWrite("for index, item := range ret {")
-			builder.FTabWrite(1, "result[index] = &item")
-			builder.FWrite("}")
-			builder.FWrite("return result, err")
+			builder.FWrite("return juice.List2[%s](rows)", retType)
 		}
 	} else {
 		// if is a pointer
