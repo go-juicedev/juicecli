@@ -150,7 +150,7 @@ func (f *readFuncBodyMaker) build() {
 	var body string
 
 	retType := f.function.Results()[0].TypeName()
-	query := formatParams(f.function.Params())
+	query := formatParams(f.function.Params(), false)
 
 	isArrayType := strings.HasPrefix(retType, "[]")
 
@@ -290,7 +290,7 @@ func (f *writeFuncBodyMaker) build() {
 	builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
 	builder.FWrite("var iface %s = %s", f.function.typename, f.function.receiverAlias())
 	builder.FWrite("executor := juice.NewGenericManager[any](manager).Object(iface.%s)", f.function.Name())
-	query := formatParams(f.function.Params())
+	query := formatParams(f.function.Params(), f.statement.Action() == juice.Insert)
 	if len(f.function.Results()) == 1 {
 		builder.FWrite("_, err := executor.ExecContext(%s, %s)", f.function.Params()[0].Name(), query)
 		builder.FWrite("return err")
@@ -301,7 +301,7 @@ func (f *writeFuncBodyMaker) build() {
 	f.function.body = body
 }
 
-func formatParams(params ast.ValueGroup) string {
+func formatParams(params ast.ValueGroup, isInsert bool) string {
 	switch len(params) {
 	case 0, 1:
 		return "nil"
@@ -312,7 +312,9 @@ func formatParams(params ast.ValueGroup) string {
 		}
 		switch param1.Field.Type.(type) {
 		case *stdast.ArrayType:
-			return fmt.Sprintf(`juice.H{"%s": %s}`, param1.Name(), param1.Name())
+			if !isInsert {
+				return fmt.Sprintf(`juice.H{"%s": %s}`, param1.Name(), param1.Name())
+			}
 		}
 		return param1.Name()
 	default:
