@@ -1,10 +1,10 @@
 module github.com/go-juicedev/juicecli
 
-go 1.23.2
+go 1.24
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/go-juicedev/juice v1.7.3
+	github.com/go-juicedev/juice v1.7.6
 	github.com/spf13/cobra v1.8.1
 )
 
