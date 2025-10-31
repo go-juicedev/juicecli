@@ -23,9 +23,11 @@ func do(targetType, namespace, output, cfg, version string) error {
 	if err != nil {
 		return err
 	}
-	implement := internal.NewImplement(file, iface, version, targetType, targetType+"Impl")
-	generator := internal.NewGenerator(namespace, config, implement, version)
-	reader, err := generator.Generate()
+	implement, err := internal.NewImplement(file, iface, config, namespace, version, targetType, targetType+"Impl")
+	if err != nil {
+		return err
+	}
+	reader, err := internal.NewGenerator(implement).Generate()
 	if err != nil {
 		return err
 	}
