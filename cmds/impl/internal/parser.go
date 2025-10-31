@@ -3,7 +3,6 @@ package internal
 import (
 	"errors"
 	"fmt"
-	"github.com/go-juicedev/juicecli/internal/namespace"
 	"go/ast"
 	"io"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/go-juicedev/juice"
 	"github.com/go-juicedev/juicecli/internal/module"
+	"github.com/go-juicedev/juicecli/internal/namespace"
 )
 
 //go:linkname newLocalXMLConfiguration github.com/go-juicedev/juice.newLocalXMLConfiguration
