@@ -97,14 +97,23 @@ func (f FunctionGroup) String() string {
 type FunctionBodyMaker struct {
 	statement juice.Statement
 	function  *Function
+	version   string
 }
 
 func (f *FunctionBodyMaker) Make() error {
 	var bodyMaker functionBodyMaker
 	if f.statement.Action().ForRead() {
-		bodyMaker = &readFuncBodyMaker{function: f.function, statement: f.statement}
+		bodyMaker = &readFuncBodyMaker{
+			function:  f.function,
+			statement: f.statement,
+			version:   f.version,
+		}
 	} else {
-		bodyMaker = &writeFuncBodyMaker{function: f.function, statement: f.statement}
+		bodyMaker = &writeFuncBodyMaker{
+			function:  f.function,
+			statement: f.statement,
+			version:   f.version,
+		}
 	}
 	return bodyMaker.Make()
 }
@@ -116,6 +125,7 @@ type functionBodyMaker interface {
 type readFuncBodyMaker struct {
 	statement juice.Statement
 	function  *Function
+	version   string
 }
 
 func (f *readFuncBodyMaker) Make() error {
@@ -144,7 +154,13 @@ func (f *readFuncBodyMaker) check() error {
 
 func (f *readFuncBodyMaker) build() {
 	var builder funcBodyWriter
-	builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
+
+	switch f.version {
+	case "v1":
+		builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
+	case "v2":
+		builder.FWrite("manager := %s.manager", f.function.receiverAlias())
+	}
 
 	iface := lowercasing(f.function.receiver)
 
@@ -207,6 +223,7 @@ func (f *readFuncBodyMaker) build() {
 type writeFuncBodyMaker struct {
 	statement juice.Statement
 	function  *Function
+	version   string
 }
 
 func (f *writeFuncBodyMaker) Make() error {
@@ -292,7 +309,14 @@ func (f *writeFuncBodyMaker) check() error {
 func (f *writeFuncBodyMaker) build() {
 	//var builder = new(strings.Builder)
 	var builder funcBodyWriter
-	builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
+
+	switch f.version {
+	case "v1":
+		builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
+	case "v2":
+		builder.FWrite("manager := %s.manager", f.function.receiverAlias())
+	}
+
 	iface := lowercasing(f.function.receiver)
 	builder.FWrite("executor := juice.NewGenericManager[any](manager).Object(%s.%s)", iface, f.function.Name())
 	query := formatParams(f.function.Params())

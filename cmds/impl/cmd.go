@@ -2,13 +2,14 @@ package impl
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/go-juicedev/juicecli/cmds/impl/internal"
 	"github.com/go-juicedev/juicecli/internal/command"
 	"github.com/spf13/cobra"
-	"io"
 )
 
-func do(targetType, namespace, output, cfg string) error {
+func do(targetType, namespace, output, cfg, version string) error {
 	parser := internal.NewParser(targetType).WithNamespace(namespace).WithOutput(output).WithConfig(cfg)
 	config, err := parser.Config()
 	if err != nil {
@@ -22,8 +23,8 @@ func do(targetType, namespace, output, cfg string) error {
 	if err != nil {
 		return err
 	}
-	implement := internal.NewImplement(file, iface, targetType, targetType+"Impl")
-	generator := internal.NewGenerator(namespace, config, implement)
+	implement := internal.NewImplement(file, iface, version, targetType, targetType+"Impl")
+	generator := internal.NewGenerator(namespace, config, implement, version)
 	reader, err := generator.Generate()
 	if err != nil {
 		return err
@@ -63,11 +64,18 @@ func NewCommand() *cobra.Command {
 		ShortHand: "c",
 		Usage:     "The configuration file path. If not specified, it will search for juice.xml, config/juice.xml, config.xml, or config/config.xml",
 	}
+	versionArg := command.Arg{
+		Name:      "version",
+		ShortHand: "",
+		Usage:     "The version of juice framework to target. Default is the v1.",
+		Value:     "v1",
+	}
 	args := []command.Arg{
 		typeArg,
 		namespaceArg,
 		outputArg,
 		configArg,
+		versionArg,
 	}
 	cmd := command.NewCommand("impl", args...)
 	cmd.Short = "Generate implementation for an interface"
@@ -80,7 +88,8 @@ func NewCommand() *cobra.Command {
 		namespace, _ := cmd.Flags().GetString(namespaceArg.Name)
 		output, _ := cmd.Flags().GetString(outputArg.Name)
 		config, _ := cmd.Flags().GetString(configArg.Name)
-		if err := do(targetType, namespace, output, config); err != nil {
+		version, _ := cmd.Flags().GetString(versionArg.Name)
+		if err := do(targetType, namespace, output, config, version); err != nil {
 			fmt.Println(err)
 		}
 	}

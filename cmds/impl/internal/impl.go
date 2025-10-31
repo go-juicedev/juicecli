@@ -18,6 +18,7 @@ type Implement struct {
 	extraImports astlite.ImportGroup
 	methods      FunctionGroup
 	src, dst     string
+	version      string
 }
 
 func (i *Implement) Package() string {
@@ -34,7 +35,7 @@ func (i *Implement) String() string {
 	builder.WriteString("\n\n")
 	builder.WriteString(i.Imports().String())
 	builder.WriteString("\n\n")
-	builder.WriteString(fmt.Sprintf("type %s struct {}", i.dst))
+	builder.WriteString(fmt.Sprintf("type %s struct { manager juice.Manager }", i.dst))
 	builder.WriteString("\n\n")
 	// implement methods
 	builder.WriteString(fmt.Sprintf("var %s %s", lowercasing(i.dst), i.src))
@@ -49,15 +50,22 @@ func (i *Implement) String() string {
 func (i *Implement) constructor() string {
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("// New%s returns a new %s.\n", i.src, i.src))
-	builder.WriteString(fmt.Sprintf("func New%s() %s {", i.src, i.src))
-	builder.WriteString("\n\t")
-	builder.WriteString(fmt.Sprintf("return &%s{}", i.dst))
+	switch i.version {
+	case "v1":
+		builder.WriteString(fmt.Sprintf("func New%s() %s {", i.src, i.src))
+		builder.WriteString("\n\t")
+		builder.WriteString(fmt.Sprintf("return &%s{}", i.dst))
+	case "v2":
+		builder.WriteString(fmt.Sprintf("func New%s(manager juice.Manager) %s {", i.src, i.src))
+		builder.WriteString("\n\t")
+		builder.WriteString(fmt.Sprintf("return &%s{manager: manager}", i.dst))
+	}
 	builder.WriteString("\n")
 	builder.WriteString("}")
 	return builder.String()
 }
 
-func NewImplement(writer *ast.File, iface *ast.InterfaceType, input, output string) *Implement {
+func NewImplement(writer *ast.File, iface *ast.InterfaceType, version, input, output string) *Implement {
 	impl := &Implement{
 		dst:   output,
 		src:   input,
@@ -66,6 +74,7 @@ func NewImplement(writer *ast.File, iface *ast.InterfaceType, input, output stri
 		extraImports: astlite.ImportGroup{
 			&astlite.Import{ImportSpec: extraImport.Imports[0]},
 		},
+		version: version,
 	}
 	return impl
 }

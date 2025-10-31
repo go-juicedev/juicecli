@@ -13,6 +13,7 @@ type Generator struct {
 	cfg       juice.IConfiguration
 	impl      *Implement
 	namespace string
+	version   string
 }
 
 func (g *Generator) Generate() (io.Reader, error) {
@@ -27,7 +28,7 @@ func (g *Generator) Generate() (io.Reader, error) {
 			continue
 		}
 		function := &Function{method: method, receiver: g.impl.dst, typename: g.impl.src}
-		maker := FunctionBodyMaker{statement: statement, function: function}
+		maker := FunctionBodyMaker{statement: statement, function: function, version: g.version}
 		if err = maker.Make(); err != nil {
 			return nil, err
 		}
@@ -50,6 +51,6 @@ func (g *Generator) WriteTo(writer io.Writer) (int64, error) {
 	return io.Copy(writer, reader)
 }
 
-func NewGenerator(namespace string, cfg juice.IConfiguration, impl *Implement) *Generator {
-	return &Generator{cfg: cfg, impl: impl, namespace: namespace}
+func NewGenerator(namespace string, cfg juice.IConfiguration, impl *Implement, version string) *Generator {
+	return &Generator{cfg: cfg, impl: impl, namespace: namespace, version: version}
 }
