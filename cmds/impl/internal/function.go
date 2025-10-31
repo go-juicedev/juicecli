@@ -181,12 +181,16 @@ func (f *readFuncBodyMakerV1) build() {
 
 		if isPointer {
 			builder.FWrite(
-				"return juice.QueryContext[%s](%s, %s, %s)",
+				"ret, err := juice.QueryContext[%s](%s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
+			builder.FWrite("if err != nil {")
+			builder.FWrite("\treturn nil, err")
+			builder.FWrite("}")
+			builder.FWrite("return &ret, nil")
 		} else {
 			builder.FWrite(
 				"return juice.QueryContext[%s](%s, %s, %s)",
@@ -268,12 +272,16 @@ func (f *readFuncBodyMakerV2) build() {
 
 		if isPointer {
 			builder.FWrite(
-				"return juice.QueryContext[%s](%s, %s, %s)",
+				"ret, err := juice.QueryContext[%s](%s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
+			builder.FWrite("if err != nil {")
+			builder.FWrite("\treturn nil, err")
+			builder.FWrite("}")
+			builder.FWrite("return &ret, nil")
 		} else {
 			builder.FWrite(
 				"return juice.QueryContext[%s](%s, %s, %s)",
