@@ -15,7 +15,7 @@ import (
 )
 
 //go:linkname newLocalXMLConfiguration github.com/go-juicedev/juice.newLocalXMLConfiguration
-func newLocalXMLConfiguration(string, bool) (juice.IConfiguration, error)
+func newLocalXMLConfiguration(string, bool) (juice.Configuration, error)
 
 // defaultConfigFiles is the default config file name
 // while config is not set, we will check if config.xml or config/config.xml exists
@@ -74,7 +74,7 @@ func (p *Parser) config() (string, error) {
 	return "", errors.New(strings.Join(defaultConfigFiles[:], "|") + " not found")
 }
 
-func (p *Parser) Config() (juice.IConfiguration, error) {
+func (p *Parser) Config() (juice.Configuration, error) {
 	config, err := p.config()
 	if err != nil {
 		return nil, err

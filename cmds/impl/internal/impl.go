@@ -20,7 +20,7 @@ type Implement interface {
 type implement struct {
 	iface                     *astlite.Interface
 	file                      *ast.File
-	cfg                       juice.IConfiguration
+	cfg                       juice.Configuration
 	extraImports              astlite.ImportGroup
 	methods                   FunctionGroup
 	src, dst                  string
@@ -58,7 +58,7 @@ func (i *implement) buildFunction() error {
 	return nil
 }
 
-func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.IConfiguration, namespace, version, input, output string) (Implement, error) {
+func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configuration, namespace, version, input, output string) (Implement, error) {
 	impl := &implement{
 		dst:   output,
 		cfg:   cfg,
