@@ -2,6 +2,7 @@ package ast
 
 import (
 	"go/ast"
+	`os/exec`
 	"strings"
 )
 
@@ -12,6 +13,11 @@ func (i *Import) String() string {
 		return i.Name.Name + " " + i.Path.Value
 	}
 	return i.Path.Value
+}
+
+func (i *Import) UnQuote() string {
+	replace := strings.NewReplacer(`"`, "")
+	return replace.Replace(i.Path.Value)
 }
 
 // Usage returns the name of the import.
@@ -38,13 +44,46 @@ func (ig ImportGroup) String() string {
 	if len(ig) == 0 {
 		return ""
 	}
+
+	if len(ig) == 1 {
+		return "import " + ig[0].String()
+	}
+
+	// std library imports are not grouped separately for simplicity
+	stdLibs := map[string]struct{}{}
+	outputs, err := exec.Command("go", "list", "std").Output()
+	if err == nil {
+		for _, line := range strings.Split(string(outputs), "\n") {
+			if library := strings.TrimSpace(line); len(library) != 0 {
+				stdLibs[library] = struct{}{}
+			}
+		}
+	}
+	// sort imports: std libs first, then others alphabetically
+	var stdImports, otherImports ImportGroup
+	for _, imp := range ig {
+		if _, ok := stdLibs[imp.UnQuote()]; ok {
+			stdImports = append(stdImports, imp)
+		} else {
+			otherImports = append(otherImports, imp)
+		}
+	}
+
 	var builder strings.Builder
 	builder.WriteString("import (\n")
-	for _, imp := range ig {
-		builder.WriteString("\t")
-		builder.WriteString(imp.String())
+
+	for _, imports := range [...][]*Import{stdImports, otherImports} {
+		if len(imports) == 0 {
+			continue
+		}
+		for _, imp := range imports {
+			builder.WriteString("\t")
+			builder.WriteString(imp.String())
+			builder.WriteString("\n")
+		}
 		builder.WriteString("\n")
 	}
+
 	builder.WriteString(")")
 	return builder.String()
 }
