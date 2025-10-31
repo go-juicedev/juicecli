@@ -145,7 +145,8 @@ func (f *readFuncBodyMaker) check() error {
 func (f *readFuncBodyMaker) build() {
 	var builder funcBodyWriter
 	builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
-	builder.FWrite("var iface %s = %s", f.function.typename, f.function.receiverAlias())
+
+	iface := lowercasing(f.function.receiver)
 
 	var body string
 
@@ -164,7 +165,8 @@ func (f *readFuncBodyMaker) build() {
 		if isPointer {
 			retType = retType[1:]
 		}
-		builder.FWrite("rows, err := manager.Object(iface.%s).QueryContext(%s, %s)",
+		builder.FWrite("rows, err := manager.Object(%s.%s).QueryContext(%s, %s)",
+			iface,
 			f.function.Name(),
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
 			query,
@@ -186,12 +188,15 @@ func (f *readFuncBodyMaker) build() {
 			// in order to get the real type and use it to create the object without using reflection.
 			retType = retType[1:]
 		}
-		builder.FWrite("executor := juice.NewGenericManager[%s](manager).Object(iface.%s)", retType, f.function.Name())
-		builder.FWrite("ret, err := executor.QueryContext(%s, %s)", f.function.Params().NameAt(ast.ParamPrefix, 0), query)
+		builder.FWrite("executor := juice.NewGenericManager[%s](manager).Object(%s.%s)", retType, iface, f.function.Name())
 		if isPointer {
+			builder.FWrite("ret, err := executor.QueryContext(%s, %s)", f.function.Params().NameAt(ast.ParamPrefix, 0), query)
+			builder.FWrite("if err != nil {")
+			builder.FTabWrite(1, "return nil, err")
+			builder.FWrite("}")
 			builder.FWrite("return &ret, err")
 		} else {
-			builder.FWrite("return ret, err")
+			builder.FWrite("return executor.QueryContext(%s, %s)", f.function.Params().NameAt(ast.ParamPrefix, 0), query)
 		}
 	}
 	body = formatCode(builder.String())
@@ -288,8 +293,8 @@ func (f *writeFuncBodyMaker) build() {
 	//var builder = new(strings.Builder)
 	var builder funcBodyWriter
 	builder.FWrite("manager := juice.ManagerFromContext(%s)", f.function.Params().NameAt(ast.ParamPrefix, 0))
-	builder.FWrite("var iface %s = %s", f.function.typename, f.function.receiverAlias())
-	builder.FWrite("executor := juice.NewGenericManager[any](manager).Object(iface.%s)", f.function.Name())
+	iface := lowercasing(f.function.receiver)
+	builder.FWrite("executor := juice.NewGenericManager[any](manager).Object(%s.%s)", iface, f.function.Name())
 	query := formatParams(f.function.Params())
 	if len(f.function.Results()) == 1 {
 		builder.FWrite("_, err := executor.ExecContext(%s, %s)", f.function.Params()[0].Name(), query)

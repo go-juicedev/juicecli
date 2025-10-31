@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"log"
 	"strings"
+	`unicode`
 
 	astlite "github.com/go-juicedev/juicecli/internal/ast"
 )
@@ -34,6 +35,9 @@ func (i *Implement) String() string {
 	builder.WriteString(i.Imports().String())
 	builder.WriteString("\n\n")
 	builder.WriteString(fmt.Sprintf("type %s struct {}", i.dst))
+	builder.WriteString("\n\n")
+	// implement methods
+	builder.WriteString(fmt.Sprintf("var %s %s", lowercasing(i.dst), i.src))
 	builder.WriteString("\n\n")
 	builder.WriteString(i.methods.String())
 	builder.WriteString("\n\n")
@@ -81,4 +85,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func lowercasing(text string) string {
+	if text == "" {
+		return text
+	}
+	return string(unicode.ToLower(rune(text[0]))) + text[1:]
 }
