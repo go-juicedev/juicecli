@@ -17,10 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"log"
+
 	"github.com/go-juicedev/juicecli/cmds/impl"
 	"github.com/go-juicedev/juicecli/cmds/tell"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 var rootCmd = &cobra.Command{}
