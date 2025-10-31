@@ -20,7 +20,8 @@ func (g *Generator) Generate() (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.NewReader(data), nil
+	builder.WriteString(data)
+	return strings.NewReader(builder.String()), nil
 }
 
 // WriteTo writes generated code to writer.
