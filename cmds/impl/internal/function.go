@@ -136,7 +136,7 @@ func (f *readFuncBodyMakerV1) Make() error {
 func (f *readFuncBodyMakerV1) build() {
 	var builder funcBodyWriter
 
-	iface := lowercasing(f.function.receiver)
+	iface := fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias())
 
 	retType := f.function.Results()[0].TypeName()
 	query := formatParams(f.function.Params())
@@ -220,7 +220,7 @@ func (f *readFuncBodyMakerV2) Make() error {
 func (f *readFuncBodyMakerV2) build() {
 	var builder funcBodyWriter
 
-	iface := lowercasing(f.function.receiver)
+	iface := fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias())
 
 	retType := f.function.Results()[0].TypeName()
 	query := formatParams(f.function.Params())
@@ -408,7 +408,8 @@ func (f *writeFuncBodyMakerV1) build() {
 		builder.FWrite(
 			"_, err := juice.ExecContext(%s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			lowercasing(f.function.receiver), f.function.Name(),
+			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
+			f.function.Name(),
 			formatParams(f.function.Params()),
 		)
 		builder.FWrite("return err")
@@ -416,7 +417,8 @@ func (f *writeFuncBodyMakerV1) build() {
 		builder.FWrite(
 			"return juice.ExecContext(%s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			lowercasing(f.function.receiver), f.function.Name(),
+			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
+			f.function.Name(),
 			formatParams(f.function.Params()),
 		)
 	}
@@ -449,7 +451,8 @@ func (f *writeFuncBodyMakerV2) build() {
 		builder.FWrite(
 			"_, err := juice.ExecContext(%s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			lowercasing(f.function.receiver), f.function.Name(),
+			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
+			f.function.Name(),
 			formatParams(f.function.Params()),
 		)
 		builder.FWrite("return err")
@@ -457,7 +460,8 @@ func (f *writeFuncBodyMakerV2) build() {
 		builder.FWrite(
 			"return juice.ExecContext(%s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			lowercasing(f.function.receiver), f.function.Name(),
+			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
+			f.function.Name(),
 			formatParams(f.function.Params()),
 		)
 	}

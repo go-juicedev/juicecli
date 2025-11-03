@@ -7,7 +7,6 @@ import (
 	"go/token"
 	"log"
 	"strings"
-	`unicode`
 
 	`github.com/go-juicedev/juice`
 	astlite "github.com/go-juicedev/juicecli/internal/ast"
@@ -132,7 +131,7 @@ func (i *ImplementV1) constructor() string {
 	builder.WriteString(fmt.Sprintf("// New%s returns a new %s.\n", i.src, i.src))
 	builder.WriteString(fmt.Sprintf("func New%s() %s {", i.src, i.src))
 	builder.WriteString("\n\t")
-	builder.WriteString(fmt.Sprintf("return %s", lowercasing(i.dst)))
+	builder.WriteString(fmt.Sprintf("return &%s{}", i.dst))
 	builder.WriteString("\n")
 	builder.WriteString("}")
 	return builder.String()
@@ -151,8 +150,6 @@ func (i *ImplementV1) Render() (string, error) {
 	builder.WriteString(fmt.Sprintf("type %s struct {}", i.dst))
 	builder.WriteString("\n\n")
 	// implement methods
-	builder.WriteString(fmt.Sprintf("var %s %s = &%s{}", lowercasing(i.dst), i.src, i.dst))
-	builder.WriteString("\n\n")
 	builder.WriteString(i.methods.String())
 	builder.WriteString("\n\n")
 	builder.WriteString(i.constructor())
@@ -187,8 +184,6 @@ func (i *ImplementV2) Render() (string, error) {
 	builder.WriteString(fmt.Sprintf("type %s struct { manager juice.Manager }", i.dst))
 	builder.WriteString("\n\n")
 	// implement methods
-	builder.WriteString(fmt.Sprintf("var %s %s = &%s{}", lowercasing(i.dst), i.src, i.dst))
-	builder.WriteString("\n\n")
 	builder.WriteString(i.methods.String())
 	builder.WriteString("\n\n")
 	builder.WriteString(i.constructor())
@@ -210,11 +205,4 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func lowercasing(text string) string {
-	if text == "" {
-		return text
-	}
-	return string(unicode.ToLower(rune(text[0]))) + text[1:]
 }
