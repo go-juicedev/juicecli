@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/go-juicedev/juice v1.25.3
+	github.com/go-juicedev/juice v1.25.6
 	github.com/spf13/cobra v1.8.1
 )
 

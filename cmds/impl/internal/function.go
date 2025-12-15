@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/go-juicedev/juice"
+	sqllib "github.com/go-juicedev/juice/sql"
 	"github.com/go-juicedev/juicecli/internal/ast"
 )
 
@@ -146,7 +147,7 @@ func (f *readFuncBodyMakerV1) build() {
 	_, err := f.statement.ResultMap()
 
 	// if isArrayType is true and the error is ErrResultMapNotSet
-	if isArrayType && errors.Is(err, juice.ErrResultMapNotSet) {
+	if isArrayType && errors.Is(err, sqllib.ErrResultMapNotSet) {
 		// if is an array type
 		retType = retType[2:]
 		isPointer := strings.HasPrefix(retType, "*")
@@ -237,7 +238,7 @@ func (f *readFuncBodyMakerV2) build() {
 	)
 
 	// if isArrayType is true and the error is ErrResultMapNotSet
-	if isArrayType && errors.Is(err, juice.ErrResultMapNotSet) {
+	if isArrayType && errors.Is(err, sqllib.ErrResultMapNotSet) {
 		// if is an array type
 		retType = retType[2:]
 		isPointer := strings.HasPrefix(retType, "*")
