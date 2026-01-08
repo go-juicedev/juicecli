@@ -62,6 +62,20 @@ func (v *Value) TypeName() string {
 			return name + "." + t.Sel.Name
 		}
 		return t.Sel.Name
+	case *ast.IndexExpr:
+		// 处理泛型类型，如 db.JSONField[container.PortBindingChain]
+		baseValue := &Value{Field: &ast.Field{Type: t.X}}
+		indexValue := &Value{Field: &ast.Field{Type: t.Index}}
+		return baseValue.TypeName() + "[" + indexValue.TypeName() + "]"
+	case *ast.IndexListExpr:
+		// 处理多类型参数的泛型，如 Type[T, U]
+		baseValue := &Value{Field: &ast.Field{Type: t.X}}
+		var indices []string
+		for _, index := range t.Indices {
+			indexValue := &Value{Field: &ast.Field{Type: index}}
+			indices = append(indices, indexValue.TypeName())
+		}
+		return baseValue.TypeName() + "[" + strings.Join(indices, ", ") + "]"
 	default:
 		log.Fatal("unknown type")
 		return ""
@@ -244,6 +258,12 @@ func importTypeName(expr ast.Expr) string {
 		return importTypeName(t.Value)
 	case *ast.Ident:
 		return t.Name
+	case *ast.IndexExpr:
+		// 处理泛型类型，如 db.JSONField[T]
+		return importTypeName(t.X)
+	case *ast.IndexListExpr:
+		// 处理多类型参数的泛型，如 Type[T, U]
+		return importTypeName(t.X)
 	}
 	return ""
 }
