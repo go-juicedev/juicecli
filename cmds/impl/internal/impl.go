@@ -70,56 +70,28 @@ func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configur
 		namespace: namespace,
 	}
 
-	switch version {
-	case v1:
-		impl.functionBodyMakerProvider = func(statement juice.Statement, function *Function) FunctionBodyMaker {
-			return &GenericFunctionBodyMaker{
-				statement: statement,
-				function:  function,
-				readFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
-					return &readFuncBodyMakerV1{
-						readFuncBodyMaker: &readFuncBodyMaker{
-							statement: statement,
-							function:  function,
-						}}
-				},
-				writeFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
-					return &writeFuncBodyMakerV1{
-						writeFuncBodyMaker: &writeFuncBodyMaker{
-							statement: statement,
-							function:  function,
-						},
-					}
-				},
-			}
+	impl.functionBodyMakerProvider = func(statement juice.Statement, function *Function) FunctionBodyMaker {
+		return &GenericFunctionBodyMaker{
+			statement: statement,
+			function:  function,
+			readFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
+				return &readFuncBodyMakerV2{
+					readFuncBodyMaker: &readFuncBodyMaker{
+						statement: statement,
+						function:  function,
+					}}
+			},
+			writeFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
+				return &writeFuncBodyMakerV2{
+					writeFuncBodyMaker: &writeFuncBodyMaker{
+						statement: statement,
+						function:  function,
+					},
+				}
+			},
 		}
-		return &ImplementV1{implement: impl}, nil
-	case v2:
-		impl.functionBodyMakerProvider = func(statement juice.Statement, function *Function) FunctionBodyMaker {
-			return &GenericFunctionBodyMaker{
-				statement: statement,
-				function:  function,
-				readFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
-					return &readFuncBodyMakerV2{
-						readFuncBodyMaker: &readFuncBodyMaker{
-							statement: statement,
-							function:  function,
-						}}
-				},
-				writeFuncBodyMakerProvider: func(statement juice.Statement, function *Function) FunctionBodyMaker {
-					return &writeFuncBodyMakerV2{
-						writeFuncBodyMaker: &writeFuncBodyMaker{
-							statement: statement,
-							function:  function,
-						},
-					}
-				},
-			}
-		}
-		return &ImplementV2{implement: impl}, nil
-	default:
-		return nil, fmt.Errorf("unsupported version: %s", version)
 	}
+	return &ImplementV2{implement: impl}, nil
 }
 
 type ImplementV1 struct {

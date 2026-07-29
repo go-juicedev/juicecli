@@ -122,90 +122,6 @@ func (f *readFuncBodyMaker) check() error {
 	return nil
 }
 
-type readFuncBodyMakerV1 struct {
-	*readFuncBodyMaker
-}
-
-func (f *readFuncBodyMakerV1) Make() error {
-	if err := f.check(); err != nil {
-		return err
-	}
-	f.build()
-	return nil
-}
-
-func (f *readFuncBodyMakerV1) build() {
-	var builder funcBodyWriter
-
-	iface := fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias())
-
-	retType := f.function.Results()[0].TypeName()
-	query := formatParams(f.function.Params())
-
-	isArrayType := strings.HasPrefix(retType, "[]")
-
-	_, err := f.statement.ResultMap()
-
-	// if isArrayType is true and the error is ErrResultMapNotSet
-	if isArrayType && errors.Is(err, sqllib.ErrResultMapNotSet) {
-		// if is an array type
-		retType = retType[2:]
-		isPointer := strings.HasPrefix(retType, "*")
-		if isPointer {
-			retType = retType[1:]
-		}
-		if isPointer {
-			builder.FWrite(
-				"return juice.QueryList2Context[%s](%s, %s, %s)",
-				retType,
-				f.function.Params().NameAt(ast.ParamPrefix, 0),
-				fmt.Sprintf("%s.%s", iface, f.function.Name()),
-				query,
-			)
-		} else {
-			builder.FWrite(
-				"return juice.QueryListContext[%s](%s, %s, %s)",
-				retType,
-				f.function.Params().NameAt(ast.ParamPrefix, 0),
-				fmt.Sprintf("%s.%s", iface, f.function.Name()),
-				query,
-			)
-		}
-	} else {
-		// if is a pointer
-		isPointer := strings.HasPrefix(retType, "*")
-		if isPointer {
-			// if is a pointer, remove the *
-			// in order to get the real type and use it to create the object without using reflection.
-			retType = retType[1:]
-		}
-
-		if isPointer {
-			builder.FWrite(
-				"ret, err := juice.QueryContext[%s](%s, %s, %s)",
-				retType,
-				f.function.Params().NameAt(ast.ParamPrefix, 0),
-				fmt.Sprintf("%s.%s", iface, f.function.Name()),
-				query,
-			)
-			builder.FWrite("if err != nil {")
-			builder.FWrite("\treturn nil, err")
-			builder.FWrite("}")
-			builder.FWrite("return &ret, nil")
-		} else {
-			builder.FWrite(
-				"return juice.QueryContext[%s](%s, %s, %s)",
-				retType,
-				f.function.Params().NameAt(ast.ParamPrefix, 0),
-				fmt.Sprintf("%s.%s", iface, f.function.Name()),
-				query,
-			)
-		}
-	}
-
-	f.function.body = formatCode(builder.String())
-}
-
 type readFuncBodyMakerV2 struct {
 	*readFuncBodyMaker
 }
@@ -230,13 +146,6 @@ func (f *readFuncBodyMakerV2) build() {
 
 	_, err := f.statement.ResultMap()
 
-	builder.FWrite(
-		"%s = juice.ContextWithManager(%s, %s.manager)",
-		f.function.Params().NameAt(ast.ParamPrefix, 0),
-		f.function.Params().NameAt(ast.ParamPrefix, 0),
-		f.function.receiverAlias(),
-	)
-
 	// if isArrayType is true and the error is ErrResultMapNotSet
 	if isArrayType && errors.Is(err, sqllib.ErrResultMapNotSet) {
 		// if is an array type
@@ -247,17 +156,19 @@ func (f *readFuncBodyMakerV2) build() {
 		}
 		if isPointer {
 			builder.FWrite(
-				"return juice.QueryList2Context[%s](%s, %s, %s)",
+				"return juice.QueryList2Context[%s](%s, %s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
+				fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
 		} else {
 			builder.FWrite(
-				"return juice.QueryListContext[%s](%s, %s, %s)",
+				"return juice.QueryListContext[%s](%s, %s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
+				fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
@@ -273,9 +184,10 @@ func (f *readFuncBodyMakerV2) build() {
 
 		if isPointer {
 			builder.FWrite(
-				"ret, err := juice.QueryContext[%s](%s, %s, %s)",
+				"ret, err := juice.QueryContext[%s](%s, %s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
+				fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
@@ -285,9 +197,10 @@ func (f *readFuncBodyMakerV2) build() {
 			builder.FWrite("return &ret, nil")
 		} else {
 			builder.FWrite(
-				"return juice.QueryContext[%s](%s, %s, %s)",
+				"return juice.QueryContext[%s](%s, %s, %s, %s)",
 				retType,
 				f.function.Params().NameAt(ast.ParamPrefix, 0),
+				fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 				fmt.Sprintf("%s.%s", iface, f.function.Name()),
 				query,
 			)
@@ -390,43 +303,6 @@ func (f writeFuncBodyMaker) check() error {
 	return nil
 }
 
-type writeFuncBodyMakerV1 struct {
-	*writeFuncBodyMaker
-}
-
-func (f *writeFuncBodyMakerV1) Make() error {
-	if err := f.check(); err != nil {
-		return err
-	}
-	f.build()
-	return nil
-}
-
-func (f *writeFuncBodyMakerV1) build() {
-	var builder funcBodyWriter
-
-	if len(f.function.Results()) == 1 {
-		builder.FWrite(
-			"_, err := juice.ExecContext(%s, %s.%s, %s)",
-			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
-			f.function.Name(),
-			formatParams(f.function.Params()),
-		)
-		builder.FWrite("return err")
-	} else {
-		builder.FWrite(
-			"return juice.ExecContext(%s, %s.%s, %s)",
-			f.function.Params().NameAt(ast.ParamPrefix, 0),
-			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
-			f.function.Name(),
-			formatParams(f.function.Params()),
-		)
-	}
-
-	f.function.body = formatCode(builder.String())
-}
-
 type writeFuncBodyMakerV2 struct {
 	*writeFuncBodyMaker
 }
@@ -442,16 +318,11 @@ func (f *writeFuncBodyMakerV2) Make() error {
 func (f *writeFuncBodyMakerV2) build() {
 	var builder funcBodyWriter
 
-	builder.FWrite("%s = juice.ContextWithManager(%s, %s.manager)",
-		f.function.Params().NameAt(ast.ParamPrefix, 0),
-		f.function.Params().NameAt(ast.ParamPrefix, 0),
-		f.function.receiverAlias(),
-	)
-
 	if len(f.function.Results()) == 1 {
 		builder.FWrite(
-			"_, err := juice.ExecContext(%s, %s.%s, %s)",
+			"_, err := juice.ExecContext(%s, %s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
+			fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
 			f.function.Name(),
 			formatParams(f.function.Params()),
@@ -459,8 +330,9 @@ func (f *writeFuncBodyMakerV2) build() {
 		builder.FWrite("return err")
 	} else {
 		builder.FWrite(
-			"return juice.ExecContext(%s, %s.%s, %s)",
+			"return juice.ExecContext(%s, %s, %s.%s, %s)",
 			f.function.Params().NameAt(ast.ParamPrefix, 0),
+			fmt.Sprintf("%s.manager", f.function.receiverAlias()),
 			fmt.Sprintf("%s(%s)", f.function.typename, f.function.receiverAlias()),
 			f.function.Name(),
 			formatParams(f.function.Params()),
