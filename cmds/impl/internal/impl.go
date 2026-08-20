@@ -39,7 +39,7 @@ func (i *implement) buildFunction() error {
 	for _, m := range i.iface.Methods() {
 		method := m
 		key := fmt.Sprintf("%s.%s", i.namespace, method.Name())
-		statement, err := i.cfg.GetStatement(key)
+		statement, err := i.cfg.Statement(juice.StatementID(key))
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func (i *implement) buildFunction() error {
 	return nil
 }
 
-func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configuration, namespace, version, input, output string) (Implement, error) {
+func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configuration, namespace, input, output string) (Implement, error) {
 	impl := &implement{
 		dst:   output,
 		cfg:   cfg,
