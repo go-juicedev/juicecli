@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func do(targetType, namespace, output, cfg, version string) error {
+func do(targetType, namespace, output, cfg string) error {
 	parser := internal.NewParser(targetType).WithNamespace(namespace).WithOutput(output).WithConfig(cfg)
 	config, err := parser.Config()
 	if err != nil {
@@ -23,7 +23,7 @@ func do(targetType, namespace, output, cfg, version string) error {
 	if err != nil {
 		return err
 	}
-	implement, err := internal.NewImplement(file, iface, config, namespace, version, targetType, targetType+"Impl")
+	implement, err := internal.NewImplement(file, iface, config, namespace, targetType, targetType+"Impl")
 	if err != nil {
 		return err
 	}
@@ -66,18 +66,11 @@ func NewCommand() *cobra.Command {
 		ShortHand: "c",
 		Usage:     "The configuration file path. If not specified, it will search for juice.xml, config/juice.xml, config.xml, or config/config.xml",
 	}
-	versionArg := command.Arg{
-		Name:      "version",
-		ShortHand: "",
-		Usage:     "The version of juice framework to target. Default is the v1.",
-		Value:     "v1",
-	}
 	args := []command.Arg{
 		typeArg,
 		namespaceArg,
 		outputArg,
 		configArg,
-		versionArg,
 	}
 	cmd := command.NewCommand("impl", args...)
 	cmd.Short = "Generate implementation for an interface"
@@ -90,8 +83,7 @@ func NewCommand() *cobra.Command {
 		namespace, _ := cmd.Flags().GetString(namespaceArg.Name)
 		output, _ := cmd.Flags().GetString(outputArg.Name)
 		config, _ := cmd.Flags().GetString(configArg.Name)
-		version, _ := cmd.Flags().GetString(versionArg.Name)
-		if err := do(targetType, namespace, output, config, version); err != nil {
+		if err := do(targetType, namespace, output, config); err != nil {
 			fmt.Println(err)
 		}
 	}

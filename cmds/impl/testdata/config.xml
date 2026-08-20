@@ -8,7 +8,7 @@
     </environments>
 
 
-    <mappers prefix="github.com.go-juicedev.juicecli.cmds.impl">
+    <mappers>
         <mapper resource="user_mapper.xml"/>
     </mappers>
 </configuration>

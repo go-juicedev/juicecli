@@ -5,46 +5,30 @@ package testcase
 import (
 	"context"
 	"database/sql"
+
 	"github.com/go-juicedev/juice"
 )
 
-type InterfaceImpl struct{}
+type InterfaceImpl struct{ manager juice.Manager }
 
 func (i InterfaceImpl) GetUserByID(ctx context.Context, id *int64) (result0 User, result1 error) {
-	manager := juice.ManagerFromContext(ctx)
-	var iface Interface = i
-	executor := juice.NewGenericManager[User](manager).Object(iface.GetUserByID)
-	ret, err := executor.QueryContext(ctx, juice.H{"id": id})
-	return ret, err
+	return juice.QueryContext[User](ctx, i.manager, Interface(i).GetUserByID, juice.H{"id": id})
 }
 
 func (i InterfaceImpl) GetUserByIDs(ctx context.Context, ids []int64) (result0 []User, result1 error) {
-	manager := juice.ManagerFromContext(ctx)
-	var iface Interface = i
-	rows, err := manager.Object(iface.GetUserByIDs).QueryContext(ctx, juice.H{"ids": ids})
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	return juice.List[User](rows)
+	return juice.QueryListContext[User](ctx, i.manager, Interface(i).GetUserByIDs, juice.H{"ids": ids})
 }
 
 func (i InterfaceImpl) CreateUser(ctx context.Context, u map[string]*User) (result0 error) {
-	manager := juice.ManagerFromContext(ctx)
-	var iface Interface = i
-	executor := juice.NewGenericManager[any](manager).Object(iface.CreateUser)
-	_, err := executor.ExecContext(ctx, u)
+	_, err := juice.ExecContext(ctx, i.manager, Interface(i).CreateUser, u)
 	return err
 }
 
 func (i InterfaceImpl) DeleteUserByID(ctx context.Context, id int64, name string) (result0 sql.Result, result1 error) {
-	manager := juice.ManagerFromContext(ctx)
-	var iface Interface = i
-	executor := juice.NewGenericManager[any](manager).Object(iface.DeleteUserByID)
-	return executor.ExecContext(ctx, juice.H{"id": id, "name": name})
+	return juice.ExecContext(ctx, i.manager, Interface(i).DeleteUserByID, juice.H{"id": id, "name": name})
 }
 
 // NewInterface returns a new Interface.
-func NewInterface() Interface {
-	return &InterfaceImpl{}
+func NewInterface(manager juice.Manager) Interface {
+	return &InterfaceImpl{manager: manager}
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<mapper namespace="testdata.Interface">
+<mapper namespace="github.com.go-juicedev.juicecli.cmds.impl.testdata.Interface">
     <select id="GetUserByID">
         select * from user where id = #{id} limit 1
     </select>
