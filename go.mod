@@ -4,7 +4,7 @@ go 1.27
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/go-juicedev/juice v1.27.0
+	github.com/go-juicedev/juice v1.27.2
 	github.com/spf13/cobra v1.8.1
 )
 

@@ -19,7 +19,7 @@ type Implement interface {
 type implement struct {
 	iface                     *astlite.Interface
 	file                      *ast.File
-	cfg                       juice.Configuration
+	statementCatalog          juice.StatementCatalog
 	extraImports              astlite.ImportGroup
 	methods                   FunctionGroup
 	src, dst                  string
@@ -39,7 +39,7 @@ func (i *implement) buildFunction() error {
 	for _, m := range i.iface.Methods() {
 		method := m
 		key := fmt.Sprintf("%s.%s", i.namespace, method.Name())
-		statement, err := i.cfg.Statement(juice.StatementID(key))
+		statement, err := i.statementCatalog.Statement(juice.StatementID(key))
 		if err != nil {
 			return err
 		}
@@ -57,13 +57,13 @@ func (i *implement) buildFunction() error {
 	return nil
 }
 
-func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configuration, namespace, input, output string) (Implement, error) {
+func NewImplement(writer *ast.File, iface *ast.InterfaceType, statementCatalog juice.StatementCatalog, namespace, input, output string) (Implement, error) {
 	impl := &implement{
-		dst:   output,
-		cfg:   cfg,
-		src:   input,
-		file:  writer,
-		iface: &astlite.Interface{InterfaceType: iface},
+		dst:              output,
+		statementCatalog: statementCatalog,
+		src:              input,
+		file:             writer,
+		iface:            &astlite.Interface{InterfaceType: iface},
 		extraImports: astlite.ImportGroup{
 			&astlite.Import{ImportSpec: extraImport.Imports[0]},
 		},
@@ -92,40 +92,6 @@ func NewImplement(writer *ast.File, iface *ast.InterfaceType, cfg juice.Configur
 		}
 	}
 	return &ImplementV2{implement: impl}, nil
-}
-
-type ImplementV1 struct {
-	*implement
-}
-
-func (i *ImplementV1) constructor() string {
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("// New%s returns a new %s.\n", i.src, i.src))
-	builder.WriteString(fmt.Sprintf("func New%s() %s {", i.src, i.src))
-	builder.WriteString("\n\t")
-	builder.WriteString(fmt.Sprintf("return &%s{}", i.dst))
-	builder.WriteString("\n")
-	builder.WriteString("}")
-	return builder.String()
-}
-
-func (i *ImplementV1) Render() (string, error) {
-	if err := i.implement.buildFunction(); err != nil {
-		return "", err
-	}
-
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("package %s", i.Package()))
-	builder.WriteString("\n\n")
-	builder.WriteString(i.Imports().String())
-	builder.WriteString("\n\n")
-	builder.WriteString(fmt.Sprintf("type %s struct {}", i.dst))
-	builder.WriteString("\n\n")
-	// implement methods
-	builder.WriteString(i.methods.String())
-	builder.WriteString("\n\n")
-	builder.WriteString(i.constructor())
-	return formatCode(builder.String()), nil
 }
 
 type ImplementV2 struct {
