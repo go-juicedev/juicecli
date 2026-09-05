@@ -6,23 +6,21 @@ import (
 	"go/ast"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
-	_ "unsafe" // for go:linkname
 
 	"github.com/go-juicedev/juice"
+	"github.com/go-juicedev/juice/parser/xml"
 	"github.com/go-juicedev/juicecli/internal/module"
 	"github.com/go-juicedev/juicecli/internal/namespace"
 )
-
-//go:linkname newLocalXMLConfiguration github.com/go-juicedev/juice.newLocalXMLConfiguration
-func newLocalXMLConfiguration(string, bool) (*juice.CompiledConfig, error)
 
 // defaultConfigFiles is the default config file name
 // while config is not set, we will check if config.xml or config/config.xml exists
 var defaultConfigFiles = [...]string{
 	"juice.xml",
-	"config/juice.xml",
 	"config.xml",
+	"config/juice.xml",
 	"config/config.xml",
 }
 
@@ -74,12 +72,33 @@ func (p *Parser) config() (string, error) {
 	return "", errors.New(strings.Join(defaultConfigFiles[:], "|") + " not found")
 }
 
-func (p *Parser) Config() (*juice.CompiledConfig, error) {
+func (p *Parser) Config() (juice.StatementCatalog, error) {
 	config, err := p.config()
 	if err != nil {
 		return nil, err
 	}
-	return newLocalXMLConfiguration(config, true)
+	filename := config
+	dirname := filepath.Dir(filename)
+	filename = filepath.Base(filename)
+
+	root, err := os.OpenRoot(dirname)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = root.Close() }()
+
+	reader, err := root.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = reader.Close() }()
+
+	mappers, err := xml.ParseMappers(root.FS(), reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return juice.CompileMappers(mappers)
 }
 
 func (p *Parser) TypeInterface() (*ast.InterfaceType, *ast.File, error) {
