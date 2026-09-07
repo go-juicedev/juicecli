@@ -50,14 +50,23 @@ func (w *funcBodyWriter) String() string {
 }
 
 type Function struct {
-	method   *ast.Function
-	receiver string
-	body     string
-	typename string
+	method      *ast.Function
+	receiver    string
+	body        string
+	typename    string
+	statementID string
 }
 
 func (f *Function) String() string {
 	var builder strings.Builder
+	if comment := f.method.Comment(); comment != "" {
+		builder.WriteString(comment)
+	}
+	if f.statementID != "" {
+		// Keep the resolved statement id visible next to the method that still
+		// resolves it via FuncForPC at runtime.
+		builder.WriteString(fmt.Sprintf("// StatementID: %s\n", f.statementID))
+	}
 	builder.WriteString(fmt.Sprintf("func (%s %s) %s", f.receiverAlias(), f.receiver, f.method.Signature()))
 	builder.WriteString(" {")
 	if f.body == "" {

@@ -11,19 +11,27 @@ import (
 
 type InterfaceImpl struct{ manager juice.Manager }
 
+// GetUserByID 根据用户id查找用户
+// StatementID: github.com.go-juicedev.juicecli.cmds.impl.testdata.Interface.GetUserByID
 func (i InterfaceImpl) GetUserByID(ctx context.Context, id *int64) (result0 User, result1 error) {
 	return juice.QueryContext[User](ctx, i.manager, Interface(i).GetUserByID, juice.H{"id": id})
 }
 
+// GetUserByIDs 根据用户id查找用户
+// StatementID: github.com.go-juicedev.juicecli.cmds.impl.testdata.Interface.GetUserByIDs
 func (i InterfaceImpl) GetUserByIDs(ctx context.Context, ids []int64) (result0 []User, result1 error) {
 	return juice.QueryListContext[User](ctx, i.manager, Interface(i).GetUserByIDs, juice.H{"ids": ids})
 }
 
+// CreateUser 创建用户
+// StatementID: github.com.go-juicedev.juicecli.cmds.impl.testdata.Interface.CreateUser
 func (i InterfaceImpl) CreateUser(ctx context.Context, u map[string]*User) (result0 error) {
 	_, err := juice.ExecContext(ctx, i.manager, Interface(i).CreateUser, u)
 	return err
 }
 
+// DeleteUserByID 根据id删除用户
+// StatementID: github.com.go-juicedev.juicecli.cmds.impl.testdata.Interface.DeleteUserByID
 func (i InterfaceImpl) DeleteUserByID(ctx context.Context, id int64, name string) (result0 sql.Result, result1 error) {
 	return juice.ExecContext(ctx, i.manager, Interface(i).DeleteUserByID, juice.H{"id": id, "name": name})
 }

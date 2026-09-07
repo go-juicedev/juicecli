@@ -46,7 +46,12 @@ func (i *implement) buildFunction() error {
 		if statement.Attribute("gen") == "false" || statement.Attribute("generate") == "false" { // skip
 			continue
 		}
-		function := &Function{method: method, receiver: i.dst, typename: i.src}
+		function := &Function{
+			method:      method,
+			receiver:    i.dst,
+			typename:    i.src,
+			statementID: statement.ID().String(),
+		}
 		maker := i.functionBodyMakerProvider(statement, function)
 		if err = maker.Make(); err != nil {
 			return err
