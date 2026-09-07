@@ -53,7 +53,7 @@ func NewCommand() *cobra.Command {
 	namespaceArg := command.Arg{
 		Name:      "namespace",
 		ShortHand: "n",
-		Usage:     "The package name for the generated implementation (e.g. repository). If not specified, it will be auto-generated",
+		Usage:     "The mapper namespace matching the XML mapper namespace (e.g. main.UserRepository). If not specified, it is auto-generated from the module path and type name",
 	}
 	outputArg := command.Arg{
 		Name:      "output",
@@ -75,7 +75,7 @@ func NewCommand() *cobra.Command {
 	cmd.Short = "Generate implementation for an interface"
 	cmd.Long = "Generate implementation for an interface based on configuration. It supports customizing the implementation through XML configuration files."
 	cmd.Example = "  juicecli impl --type UserRepository\n" +
-		"  juicecli impl --type UserRepository --namespace repository --output user_repository.go\n" +
+		"  juicecli impl --type UserRepository --namespace main.UserRepository --output user_repository.go\n" +
 		"  juicecli impl --type UserRepository --config custom.xml"
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		targetType, _ := cmd.Flags().GetString(typeArg.Name)
