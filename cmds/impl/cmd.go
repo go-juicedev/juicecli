@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/go-juicedev/juicecli/cmds/impl/internal"
@@ -78,14 +77,12 @@ func NewCommand() *cobra.Command {
 	cmd.Example = "  juicecli impl --type UserRepository\n" +
 		"  juicecli impl --type UserRepository --namespace repository --output user_repository.go\n" +
 		"  juicecli impl --type UserRepository --config custom.xml"
-	cmd.Run = func(cmd *cobra.Command, args []string) {
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		targetType, _ := cmd.Flags().GetString(typeArg.Name)
 		namespace, _ := cmd.Flags().GetString(namespaceArg.Name)
 		output, _ := cmd.Flags().GetString(outputArg.Name)
 		config, _ := cmd.Flags().GetString(configArg.Name)
-		if err := do(targetType, namespace, output, config); err != nil {
-			fmt.Println(err)
-		}
+		return do(targetType, namespace, output, config)
 	}
 	return cmd
 }
