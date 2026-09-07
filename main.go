@@ -17,14 +17,18 @@ limitations under the License.
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/go-juicedev/juicecli/cmds/impl"
 	"github.com/go-juicedev/juicecli/cmds/tell"
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{}
+var rootCmd = &cobra.Command{
+	SilenceErrors: true,
+	SilenceUsage:  true,
+}
 
 func init() {
 	rootCmd.AddCommand(impl.NewCommand())
@@ -33,6 +37,7 @@ func init() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Println(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

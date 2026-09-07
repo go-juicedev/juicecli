@@ -121,6 +121,9 @@ func (p *Parser) Output() (io.Writer, error) {
 }
 
 func (p *Parser) Namespace() (string, error) {
+	if p.namespace != "" {
+		return p.namespace, nil
+	}
 	cmp := namespace.AutoComplete{TypeName: p.typename}
 	return cmp.Autocomplete()
 }

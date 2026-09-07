@@ -26,7 +26,7 @@ juicecli impl --type UserRepository
 
 Options:
 - `--type, -t`: The interface type name to generate implementation for (required)
-- `--namespace, -n`: The package name for the generated implementation. If not specified, it will be auto-generated
+- `--namespace, -n`: The mapper namespace matching the XML mapper namespace (e.g. `main.UserRepository`). If not specified, it is auto-generated from the module path and type name
 - `--output, -o`: The output file path. If not specified, output will be written to stdout
 - `--config, -c`: The configuration file path. If not specified, it will search for:
   - juice.xml
@@ -40,7 +40,7 @@ Examples:
 juicecli impl --type UserRepository
 
 # With custom namespace and output file
-juicecli impl --type UserRepository --namespace repository --output user_repository.go
+juicecli impl --type UserRepository --namespace main.UserRepository --output user_repository.go
 
 # With custom config file
 juicecli impl --type UserRepository --config custom.xml
