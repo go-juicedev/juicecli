@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-juicedev/juice"
+	configparser "github.com/go-juicedev/juice/parser"
 	"github.com/go-juicedev/juice/parser/xml"
 	"github.com/go-juicedev/juicecli/internal/module"
 	"github.com/go-juicedev/juicecli/internal/namespace"
@@ -72,7 +73,26 @@ func (p *Parser) config() (string, error) {
 	return "", errors.New(strings.Join(defaultConfigFiles[:], "|") + " not found")
 }
 
+// Load parses mapper configuration and compiles the statement catalog.
+func (p *Parser) Load() (juice.StatementCatalog, []configparser.Mapper, error) {
+	mappers, err := p.parseMappers()
+	if err != nil {
+		return nil, nil, err
+	}
+	catalog, err := juice.CompileMappers(mappers)
+	if err != nil {
+		return nil, nil, err
+	}
+	return catalog, mappers, nil
+}
+
+// Config parses mapper configuration and returns the compiled statement catalog.
 func (p *Parser) Config() (juice.StatementCatalog, error) {
+	catalog, _, err := p.Load()
+	return catalog, err
+}
+
+func (p *Parser) parseMappers() ([]configparser.Mapper, error) {
 	config, err := p.config()
 	if err != nil {
 		return nil, err
@@ -93,12 +113,7 @@ func (p *Parser) Config() (juice.StatementCatalog, error) {
 	}
 	defer func() { _ = reader.Close() }()
 
-	mappers, err := xml.ParseMappers(root.FS(), reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return juice.CompileMappers(mappers)
+	return xml.ParseMappers(root.FS(), reader)
 }
 
 func (p *Parser) TypeInterface() (*ast.InterfaceType, *ast.File, error) {

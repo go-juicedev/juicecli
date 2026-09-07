@@ -10,7 +10,7 @@ import (
 
 func do(targetType, namespace, output, cfg string) error {
 	parser := internal.NewParser(targetType).WithNamespace(namespace).WithOutput(output).WithConfig(cfg)
-	config, err := parser.Config()
+	catalog, mappers, err := parser.Load()
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func do(targetType, namespace, output, cfg string) error {
 	if err != nil {
 		return err
 	}
-	implement, err := internal.NewImplement(file, iface, config, namespace, targetType, targetType+"Impl")
+	implement, err := internal.NewImplement(file, iface, catalog, mappers, namespace, targetType, targetType+"Impl")
 	if err != nil {
 		return err
 	}

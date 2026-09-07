@@ -8,7 +8,8 @@ import (
 	"log"
 	"strings"
 
-	`github.com/go-juicedev/juice`
+	"github.com/go-juicedev/juice"
+	configparser "github.com/go-juicedev/juice/parser"
 	astlite "github.com/go-juicedev/juicecli/internal/ast"
 )
 
@@ -20,6 +21,7 @@ type implement struct {
 	iface                     *astlite.Interface
 	file                      *ast.File
 	statementCatalog          juice.StatementCatalog
+	mappers                   []configparser.Mapper
 	extraImports              astlite.ImportGroup
 	methods                   FunctionGroup
 	src, dst                  string
@@ -36,11 +38,21 @@ func (i *implement) Imports() astlite.ImportGroup {
 }
 
 func (i *implement) buildFunction() error {
-	for _, m := range i.iface.Methods() {
+	methods := i.iface.Methods()
+	methodNames := make([]string, 0, len(methods))
+	for _, method := range methods {
+		methodNames = append(methodNames, method.Name())
+	}
+	if err := checkStatementCoverage(i.namespace, methodNames, i.mappers); err != nil {
+		return err
+	}
+
+	for _, m := range methods {
 		method := m
 		key := fmt.Sprintf("%s.%s", i.namespace, method.Name())
 		statement, err := i.statementCatalog.Statement(juice.StatementID(key))
 		if err != nil {
+			// checkStatementCoverage should have already reported missing ids.
 			return err
 		}
 		if statement.Attribute("gen") == "false" || statement.Attribute("generate") == "false" { // skip
@@ -62,10 +74,11 @@ func (i *implement) buildFunction() error {
 	return nil
 }
 
-func NewImplement(writer *ast.File, iface *ast.InterfaceType, statementCatalog juice.StatementCatalog, namespace, input, output string) (Implement, error) {
+func NewImplement(writer *ast.File, iface *ast.InterfaceType, statementCatalog juice.StatementCatalog, mappers []configparser.Mapper, namespace, input, output string) (Implement, error) {
 	impl := &implement{
 		dst:              output,
 		statementCatalog: statementCatalog,
+		mappers:          mappers,
 		src:              input,
 		file:             writer,
 		iface:            &astlite.Interface{InterfaceType: iface},
