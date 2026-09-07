@@ -65,7 +65,7 @@ func (f *Function) String() string {
 	if f.statementID != "" {
 		// Keep the resolved statement id visible next to the method that still
 		// resolves it via FuncForPC at runtime.
-		builder.WriteString(fmt.Sprintf("// StatementID: %s\n", f.statementID))
+		builder.WriteString(fmt.Sprintf("// juice:statement-id %s\n", f.statementID))
 	}
 	builder.WriteString(fmt.Sprintf("func (%s %s) %s", f.receiverAlias(), f.receiver, f.method.Signature()))
 	builder.WriteString(" {")
