@@ -264,7 +264,7 @@ func (f writeFuncBodyMaker) check() error {
 				// if arrayType.Elt is not a pointer
 				starType, ok := arrayType.Elt.(*stdast.StarExpr)
 				if !ok {
-					return fmt.Errorf("`%s` `useGeneratedKeys` is true, but `%s` is not a pointer array type", f.statement.ID(), param1.Name())
+					return fmt.Errorf("`%s` `useGeneratedKeys` is true, but `%s` is not a pointer array type", f.statement.ID(), params.NameAt(ast.ParamPrefix, 1))
 				}
 				// todo check the starType.X is a struct type
 				_ = starType
@@ -273,7 +273,7 @@ func (f writeFuncBodyMaker) check() error {
 				// ensure it is a pointer struct type
 				starType, ok := param1.Field.Type.(*stdast.StarExpr)
 				if !ok {
-					return fmt.Errorf("`%s` `useGeneratedKeys` is true, but `%s` is not a pointer type", f.statement.ID(), param1.Name())
+					return fmt.Errorf("`%s` `useGeneratedKeys` is true, but `%s` is not a pointer type", f.statement.ID(), params.NameAt(ast.ParamPrefix, 1))
 				}
 				// todo check the starType.X is a struct type
 				_ = starType
@@ -356,21 +356,23 @@ func formatParams(params ast.ValueGroup) string {
 	case 0, 1:
 		return "nil"
 	case 2:
+		name := params.NameAt(ast.ParamPrefix, 1)
 		param1 := params[1]
 		if param1.IsBuiltInType() {
-			return fmt.Sprintf(`juice.H{"%s": %s}`, param1.Name(), param1.Name())
+			return fmt.Sprintf(`juice.H{"%s": %s}`, name, name)
 		}
 		switch param1.Field.Type.(type) {
 		case *stdast.ArrayType:
-			return fmt.Sprintf(`juice.H{"%s": %s}`, param1.Name(), param1.Name())
+			return fmt.Sprintf(`juice.H{"%s": %s}`, name, name)
 		}
-		return param1.Name()
+		return name
 	default:
 		var builder strings.Builder
 		builder.WriteString("juice.H{")
-		for index, param := range params[1:] {
-			builder.WriteString(fmt.Sprintf("%q: %s", param.Name(), param.Name()))
-			if index < len(params)-2 {
+		for index := 1; index < len(params); index++ {
+			name := params.NameAt(ast.ParamPrefix, index)
+			builder.WriteString(fmt.Sprintf("%q: %s", name, name))
+			if index < len(params)-1 {
 				builder.WriteString(", ")
 			}
 		}
